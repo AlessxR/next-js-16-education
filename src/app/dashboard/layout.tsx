@@ -23,7 +23,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                         Navigation
                     </span>
                     <Link
-                        href="/dashboard"
+                        href={{ pathname: '/shop', query: { sort: 'asc' } }}
                         className="text-blue-500 hover:text-blue-600 transition-colors"
                     >
                         Home
