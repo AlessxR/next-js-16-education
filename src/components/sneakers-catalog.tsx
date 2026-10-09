@@ -1,5 +1,5 @@
 import { handlePurhaseNotif } from '@/actions';
-import { useRouter } from 'next/router';
+import { useRouter } from 'next/navigation';
 
 async function getSpecsCatalog() {
     const res = await fetch(
