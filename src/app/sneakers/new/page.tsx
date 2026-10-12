@@ -1,54 +1,140 @@
 'use client';
 
 import { createSneakerDrop } from '@/actions/sneaker';
-import { useAction } from 'next-safe-action/hooks';
-import { resumeToPipeableStream } from 'react-dom/server';
+import { useActionState } from 'react';
+
+type FormState = {
+    success: boolean;
+    productId: number | null;
+    error: string | null;
+    validationErrors: {
+        title?: string[];
+        price?: string[];
+        stock?: string[];
+    }
+}
+
+
+// base initial state
+const initialState: FormState = {
+    success: false,
+    productId: null,
+    error: null,
+    validationErrors: {},
+}
 
 export default function NewDropPage() {
-    const { execute, isPending, result } = useAction(createSneakerDrop);
+    const [state, formAction, isPending] = useActionState<FormState, FormData>(async (prevState, formData) => {
+        const rawTitle = formData.get('title') as string;
+        const rawPrice = Number(formData.get('price'));
+        const rawStock = Number(formData.get('stock'))
 
-    const mockSneaker = {
-        title: 'Air Jordan 1 Retro High OG',
-        price: 200,
-        stock: 50,
-    };
+        const result = await createSneakerDrop({
+            title: rawTitle,
+            price: rawPrice,
+            stock: rawStock
+        });
 
-    const handleTriggerDrop = async () => {
-        execute(mockSneaker);
-    };
+        if (result?.validationErrors) {
+            return {
+                success: false,
+                productId: null,
+                error: null,
+                validationErrors: {
+                    title: result.validationErrors.title?._errors,
+                    price: result.validationErrors.price?._errors,
+                    stock: result.validationErrors.stock?._errors
+                }
+            }
+        }
+
+        if (result?.serverError) {
+            return {
+                success: false,
+                productId: null,
+                error: result.serverError,
+                validationErrors: {},
+            }
+        }
+
+        if (result?.data?.success) {
+            return {
+                success: true,
+                productId: result.data.productId,
+                error: null,
+                validationErrors: {}
+            }
+        }
+
+        return prevState;
+
+    }, initialState);
 
     return (
         <main className="p-5">
             <h2>Testing Server Action</h2>
-            <p>
-                {mockSneaker.title} (${mockSneaker.price.toFixed(2)}) - Stock:{' '}
-                {mockSneaker.stock}
-            </p>
-            <button onClick={handleTriggerDrop} disabled={isPending}>
-                {isPending ? 'Sending...' : 'Send!'}
-            </button>
+            <form action={formAction} className='flex flex-col gap-4'>
+                <div>
+                    <label htmlFor='title' className='block mb-1 text-sm font-medium'>
+                        Name of the model: 
+                    </label>
+                    <input type="text" id='title' name='title' disabled={isPending} className='w-full border rounded px-3 py-2 disabled:opacity-50' />
+                    {state.validationErrors.title && (
+                        <span className='text-red-500 text-xs'>
+                            {state.validationErrors.title.join(', ')}
+                        </span>
+                    )}
+                </div>
 
-            <div className="mt-5">
-                {result.serverError && (
-                    <p className="text-red-500">
-                        Mistakes of backend: ${result.serverError}
-                    </p>
-                )}
+                <div>
+                    <label htmlFor='price' className='block mb-1 text-sm font-medium'>
+                        Price
+                    </label>
 
-                {result.validationErrors && (
-                    <p className="text-orange-500">
-                        Validation errors contract:{' '}
-                        {Object.values(result.validationErrors).join(', ')}
-                    </p>
-                )}
+                    <input type='number' id='price' name='price' disabled={isPending} className='w-full border rounded px-3 py-2 disabled:opacity-50'>
 
-                {result.data?.success && (
-                    <p className="text-emerald-500">
-                        Sneaker drop created successfully! ID in DB: $
-                        {result.data.data.id}
-                    </p>
-                )}
-            </div>
+                    </input>
+
+                    {
+                        state.validationErrors.price && (
+                            <span className='text-red-500 text-xs'>
+                                {state.validationErrors.price.join(', ')}
+                            </span>
+                        )
+                    }
+                </div>
+
+                <div>
+                    <label htmlFor='stock' className='block mb-1 text-sm font-medium'>
+                        Stock
+                    </label>
+                    <input type='number' id='stock' name='stock' disabled={isPending} className='w-full border rounded px-3 py-2 disabled:opacity-50' />
+                    {
+                        state.validationErrors.stock && (
+                            <span className='text-red-500 text-xs'>
+                                {state.validationErrors.stock.join(', ')}
+                            </span>
+                        )
+                    }
+                </div>
+
+                <button type='submit' disabled={isPending} className='bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed'>
+                    {isPending ? 'Record on the server...' : 'Drop!'}
+                </button>
+            </form>
+
+            {state.error && (
+                <div className='text-red-500 mt-4 p-3 border border-red-500 rounded'>
+                    {state.error}
+                </div>
+            )}
+
+            {state.success && (
+                <div className='text-green-500 mt-4 p-3 border border-green-500 rounded'>
+                    Drop was created: ID {state.productId}
+
+                </div>
+            )}
         </main>
     );
 }

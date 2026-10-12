@@ -44,7 +44,7 @@ export const createSneakerDrop = actionClient
 
             return {
                 success: true,
-                data,
+                productId: data.id,
             };
         } catch (error: any) {
             throw new Error(
