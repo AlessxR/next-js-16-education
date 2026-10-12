@@ -53,3 +53,21 @@ export const createSneakerDrop = actionClient
             );
         }
     });
+
+const ToggleFavoriteSchema = z.object({
+    id: z.number(),
+});
+
+export const toggleFavorite = actionClient
+    .inputSchema(ToggleFavoriteSchema)
+    .action(async ({ parsedInput }) => {
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        if (parsedInput.id === 2) {
+            throw new Error('Failed to refresh status for this model');
+        }
+
+
+        return {
+            success: true, id: parsedInput.id
+        }
+    });
