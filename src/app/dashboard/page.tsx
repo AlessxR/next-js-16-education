@@ -1,8 +1,14 @@
+import { Metadata } from 'next';
+
 interface DashboardPageProps {
     searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
 export const instant = false;
+
+export const metadata: Metadata = {
+    title: 'Dashboard',
+};
 
 export default async function DashboardPage({
     searchParams,
