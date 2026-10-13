@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
+import { headers } from 'next/headers';
 
 // this is the font for the entire application
 const geistSans = Geist({
@@ -20,16 +21,17 @@ export const metadata: Metadata = {
 };
 
 // this is the layout for the entire application
-export default function RootLayout({ children, modal }: LayoutProps<'/'>) {
+export default async function RootLayout({ children }: LayoutProps<'/'>) {
+    // get current pathname
+    const headersStore = await headers();
+    const pathname = headersStore.get('x-pathname');
+    console.log('Current pathname: ', pathname);
     return (
         <html
             lang="en"
             className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
         >
-            <body className="min-h-full flex flex-col">
-                {children}
-                {modal}
-            </body>
+            <body className="min-h-full flex flex-col">{children}</body>
         </html>
     );
 }

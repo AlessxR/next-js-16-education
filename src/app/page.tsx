@@ -1,3 +1,4 @@
+export const instant = false;
 async function getGithubProfile() {
     const res = await fetch('https://api.github.com/repos/vercel/ai', {
         next: {

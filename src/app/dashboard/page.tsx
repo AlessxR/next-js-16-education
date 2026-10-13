@@ -2,6 +2,8 @@ interface DashboardPageProps {
     searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
+export const instant = false;
+
 export default async function DashboardPage({
     searchParams,
 }: DashboardPageProps) {
