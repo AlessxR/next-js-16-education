@@ -6,7 +6,7 @@ import { useActionState } from 'react';
 
 type FormState = {
     success: boolean;
-    productId: number | null;
+    productId: string | null;
     error: string | null;
     validationErrors: {
         title?: string[];

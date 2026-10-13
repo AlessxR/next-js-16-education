@@ -1,5 +1,7 @@
 'use server';
 
+import { products } from '@/db/schema';
+import { db } from '@/lib/db';
 import { actionClient } from '@/lib/safe-action';
 import z from 'zod';
 
@@ -25,26 +27,19 @@ export const createSneakerDrop = actionClient
         console.log(`Payload: ${parsedInput}`);
 
         try {
-            const res = await fetch('https://dummyjson.com/products/add', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    ...parsedInput,
-                    category: 'mens-shoes',
-                }),
-            });
-
-            if (!res.ok) {
-                throw new Error('Failed to create sneaker drop');
-            }
-
-            const data = await res.json();
+            // create a new record, and send this record to postgresql
+            const [newProduct] = await db
+                .insert(products)
+                .values({
+                    name: parsedInput.title,
+                    price: Math.round(parsedInput.price),
+                    stock: parsedInput.stock,
+                })
+                .returning();
 
             return {
                 success: true,
-                productId: data.id,
+                productId: newProduct.id,
             };
         } catch (error: any) {
             throw new Error(
@@ -66,8 +61,8 @@ export const toggleFavorite = actionClient
             throw new Error('Failed to refresh status for this model');
         }
 
-
         return {
-            success: true, id: parsedInput.id
-        }
+            success: true,
+            id: parsedInput.id,
+        };
     });

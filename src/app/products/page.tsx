@@ -1,37 +1,21 @@
-import { cacheLife, cacheTag } from 'next/cache';
+import { products } from '@/db/schema';
+import { db } from '@/lib/db';
 
-async function fetchProducts() {
-    'use cache';
+// static or dynamic page
+export const dynamic = 'force-dynamic'; // revalidate - 0, full off cached page. 'auto' - smart next js, 
 
-    cacheLife('hours'); // this data cached some hours
-    cacheTag('all-products'); // this data cached with tag "all-products"
-
-    const res = await fetch('https://dummyjson.com/products?limit=5');
-
-    const data = await res.json();
-
-    return data.products;
-}
-
-export default async function ProductPage() {
-    const products = await fetchProducts();
+export default async function ProductsListPage() {
+    // get data from db
+    const items = await db.select().from(products).orderBy(products.createdAt);
 
     return (
-        <div className="p-6 bg-gray-900 rounded-xl space-y-4">
-            <h2 className="text-xl font-bold text-white">Popular products</h2>
-            <ul className="space-y-2">
-                {products.map((product: any) => (
-                    <li
-                        key={product.id}
-                        className="p-3 bg-gray-850 rounded border border-gray-800 flex justify-between"
-                    >
-                        <span className="text-gray-300">{product.title}</span>
-                        <span className="text-emerald-400 font-mono">
-                            ${product.price}
-                        </span>
-                    </li>
-                ))}
-            </ul>
+        <div>
+            {items.map((item, index) => (
+                <div key={index} className="flex flex-col gap-3">
+                    <h2 className="font-semibold text-lg">{item.name}</h2>
+                    <p>{item.price}</p>
+                </div>
+            ))}
         </div>
     );
 }
