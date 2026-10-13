@@ -1,14 +1,9 @@
-import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
+import { headers } from 'next/headers';
 
 export default async function DashboardPage() {
-    const cookieStore = await cookies();
+    const headersStore = await headers();
 
-    const sessionToken = cookieStore.get('session_token')?.value;
+    const token = headersStore.get('Connection');
 
-    if (!sessionToken) {
-        redirect('/login');
-    }
-
-    return <div>Your token: {sessionToken}</div>;
+    return <div>Your headers: {token}</div>;
 }
