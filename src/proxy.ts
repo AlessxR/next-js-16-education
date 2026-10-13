@@ -1,31 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 export default function proxy(request: NextRequest) {
-    // console.log(request.nextUrl.pathname);
+    const nonce = btoa(crypto.randomUUID());
 
-    // return NextResponse.next();
+    // how resources open and run
+    const cspHeader = `
+    default-src 'self';
+    script-src 'self' 'nonce-${nonce}' 'strict-dynamic' ${process.env.NODE_ENV === 'development' ? "'unsafe-eval'" : ''};
+    style-src 'self' 'unsafe-inline';
+    img-src 'self' blob: data:;
+    font-src 'self';
+    object-src 'none';
+    base-uri 'self';
+    form-action 'self';
+    frame-ancestors 'none';
+    `
+        .replace(/\s{2,}/g, ' ')
+        .trim();
 
-    // get current pathname
-    const url = request.nextUrl;
     const requestHeaders = new Headers(request.headers);
-    requestHeaders.set('x-pathname', url.pathname);
 
-    if (url.pathname.startsWith('/dashboard')) {
-        const targetUrl = new URL('/auth/login', request.url);
-
-        return NextResponse.redirect(targetUrl);
-    }
-
-    // redirect to the new url
-    if (url.pathname === '/store/legacy') {
-        const targetUrl = new URL('/store/modern', request.url);
-
-        return NextResponse.rewrite(targetUrl, {
-            request: {
-                headers: requestHeaders,
-            },
-        });
-    }
+    requestHeaders.set('x-nonce', nonce);
+    requestHeaders.set('Content-Security-Policy', cspHeader);
 
     const response = NextResponse.next({
         request: {
@@ -33,7 +29,7 @@ export default function proxy(request: NextRequest) {
         },
     });
 
-    response.headers.set('x-proxy-handled', 'true');
+    response.headers.set('Content-Security-Policy', cspHeader);
 
     return response;
 }
